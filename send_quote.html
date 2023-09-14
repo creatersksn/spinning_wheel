@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Send Quote</title>
+  <!-- Add Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  
+  <style>
+    .body{
+        font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+
+    }
+    .card-container {
+      margin-top: 60px;
+
+      border-style: none;
+      background-color: rgba(237, 237, 237, 0.849);
+    }
+    h1{
+        color: rgb(0, 0, 125);
+        font-weight: 800;
+        text-align: center;
+
+    }
+    label{
+        color: rgb(0, 0, 0);
+        font-weight: 600;
+        font-size: 24px;
+
+    }
+    .btn{
+        font-size: 19px;
+        font-weight: 600;
+
+    }
+  
+    #navbutton{
+        color: aliceblue;
+        text-decoration: none;
+
+
+
+    }
+    #navbutton:hover{
+        color: aliceblue;
+        text-decoration: none;
+
+
+    }
+    #phoneNumber{
+        font-size: 24px;
+        font-weight: 700;
+        border-style: none;
+
+    }
+    #status{
+        margin-top: 6px;
+        color: rgb(0, 0, 0);
+        font-size: larger;
+        font-weight: 600;
+    }
+    #status2{
+        margin-top: 6px;
+        color: rgb(0, 0, 0);
+        font-size: larger;
+        font-weight: 600;
+
+    }
+    .a:hover{
+        color: #ffffff;
+        text-decoration: none;
+        /* background-color: transparent; */
+    }
+    .btn {
+    /* Common styles for buttons */
+    padding: 10px 20px;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 4px;
+  }
+  
+  .btn-primary {
+    /* Styles for the primary button */
+    background-color: #007bff;
+    color: #fff;
+  }
+  
+  /* Additional styles for the navigation buttons */
+  #navbutton {
+    margin-right: 10px;
+    align-items: center;
+  }
+  
+  #navbutton a {
+    color: #fff;
+    text-decoration: none;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card card-container">
+      <div class="card-body">
+        <h1 class="card-title">Send Quotation </h1>
+        <div class="form-group">
+          <label for="fileInput">Upload PDF:</label>
+          <input type="file" class="form-control-file" id="fileInput" accept="application/pdf">
+        </div>
+        <button class="btn btn-primary" onclick="uploadPDF()">Upload PDF</button>
+        <p id="status"></p>
+        <div class="form-group">
+          <!-- <label for="InvoiceNumber">Invoice Number:</label> -->
+          <!-- <input type="text" class="form-control" id="InvoiceNumber" name="InvoiceNumber" placeholder="Enter invoice number"> -->
+          <label for="phoneNumber">Phone Number:</label>
+          <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" placeholder="Enter phone number">
+        </div>
+        <button class="btn btn-primary" id="sendButton">Send</button>
+        <p id="status2"></p>
+        <div class="btn-container">
+  <!-- <button class="btn btn-primary" id="navbutton"><a href="./send_order.html">To Send Order</a></button> -->
+  <!-- <button class="btn btn-primary" id="navbutton"><a href="./index.html">To Send Invoice</a></button> -->
+</div>
+
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- Add Bootstrap JavaScript and other scripts -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.4.3/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.7.1/firebase-storage.js"></script>
+  <script>
+    // ---------------------------file uploading and store it in firebase //using firebase api--------------------------------------------------
+    // Firebase configuration
+    var config = {
+            apiKey: "AIzaSyC4WLcwstOnc2C78UbatKpUsg-FqSOVL2A",
+            authDomain: "eazeebox.firebaseapp.com",
+            databaseURL: "https://eazeebox-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "eazeebox",
+            storageBucket: "eazeebox.appspot.com",
+            messagingSenderId: "730592463609",
+            appId: "1:730592463609:web:3a23e8adbf999d588bb028",
+            measurementId: "G-NGLZ3NHQCR"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(config);
+        var storage = firebase.storage();
+        var pdfLink; // Declare pdfLink variable at the global level
+
+
+        // Function to handle PDF upload
+        function uploadPDF() {
+            console.log("file uploading.....!")
+            var fileInput = document.getElementById('fileInput');
+            var file = fileInput.files[0];
+
+
+            if (file && file.type === 'application/pdf') {
+                // Upload PDF file to Firebase Storage
+                var storageRef = storage.ref('pdfs/' + file.name);
+                storageRef.put(file, { contentType: 'application/pdf' })
+                    .then(function(snapshot) {
+                        // Get the download URL of the uploaded file
+                        storageRef.getDownloadURL()
+                            .then(function(url) {
+                                pdfLink = url;
+                                // Open the uploaded PDF file in the current browser window
+                                // window.location.href = url;
+                                console.log("0-displaying from here!");
+
+                                console.log(url);//pdf link
+                                console.log("displaying from here!");
+
+
+                                // Display success message
+                                var statusElement = document.getElementById('status');
+                                statusElement.innerHTML = "PDF uploaded successfully!";
+                            })
+                            .catch(function(error) {
+                                console.error("Error getting download URL:", error);
+                            });
+                    })
+                    .catch(function(error) {
+                        console.error("Error uploading PDF:", error);
+                    });
+            } else {
+                // Display an error message for invalid file type
+                var statusElement = document.getElementById('status');
+                statusElement.innerHTML = "Please select a valid PDF file.";
+            }
+        }
+    
+    
+    // ------------------send message function //using the interact api------------------------
+    function sendMessage(phoneNumber,pdfLink) {
+
+      console.log("send function triggered!...")
+      console.log(pdfLink)
+
+      const url = 'https://api.interakt.ai/v1/public/message/';
+      const apiKey = 'c2dPaHdSR3Z2eHlvRHNoRU5DaWV3WlZOdVA5YWRrb0tFTFJMS0FJQUZWQTo=';
+
+      const headers = {
+        Authorization: 'Basic ' + apiKey,
+        'Content-Type': 'application/json',
+      };
+
+      const payload = {
+        countryCode: '+91',
+        phoneNumber: phoneNumber,
+        type: 'Template',
+        callbackData: 'some_callback_data',
+        template: {
+          name: 'sendquotet',
+          languageCode: 'en',
+          headerValues:[pdfLink],
+            // "https://firebasestorage.googleapis.com/v0/b/eazeebox.appspot.com/o/pdfs%2FPO-Haptik%20(R).pdf?alt=media&token=0ecbc946-caa1-41de-bdad-3f766b45cb40",
+          
+          bodyValues: ['EAZEEBOX'],
+          buttonValues: {
+            1: ['12344']
+          }
+        }
+      };
+
+      fetch(url, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(payload),
+      })
+      .then(function(response) {
+        console.log(response.status);
+                if (response.ok) {
+                // Display success message
+                var statusElement = document.getElementById('status2');
+                statusElement.innerHTML = "Message sent successfully!";
+            } else {
+                // Display error message
+                var statusElement = document.getElementById('status2');
+                statusElement.innerHTML = "Failed to send message!";
+            }
+        return response.json();
+      })
+      .then(function(data) {
+        console.log(data);
+      })
+      .catch(function(error) {
+        console.error(error);
+        var statusElement = document.getElementById('status2');
+        statusElement.innerHTML = "An error occurred while sending the message!";
+   
+      });
+    }
+
+    document.getElementById('sendButton').addEventListener('click', function() {
+      const phoneNumber = document.getElementById('phoneNumber').value;
+      sendMessage(phoneNumber,pdfLink);
+    });
+  </script>
+</body>
+</html>
