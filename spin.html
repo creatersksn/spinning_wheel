@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.8">
+    <title>Spin Wheel</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+
+      #chart {
+        width: 500px;
+        height: 500px;
+        margin-bottom: 20px;
+        color: aliceblue;
+        border-radius: 80px;
+        /* background-color: #4b28f5; */
+      }
+
+      #question {
+        width: 400px;
+        height: 500px;
+      }
+
+      #question h1 {
+        font-size: 18px;
+        font-weight: 900;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        padding: 0;
+        margin: 0;
+        text-align: center;
+        line-height: 0px;
+        color: rgb(255, 0, 0);
+      }
+
+      label {
+        color: rgb(156, 0, 0);
+      }
+
+      /* Form styles */
+      #form-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #form-container label {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      #form-container input {
+        width: 320px;
+        height: 40px;
+        padding: 5px;
+        font-size: 18px;
+        margin-bottom: 10px;
+        border-style: double;
+        text-align: center;
+      }
+
+      #form-container button {
+        width: 150px;
+        height: 40px;
+        font-size: 18px;
+        font-weight: bold;
+        background-color: #4CAF50;
+        color: #ffffff;
+        border: none;
+        cursor: pointer;
+        border-style: none;
+      }
+
+      #form-container button:hover {
+        background-color: #006905;
+        border-style: none;
+      }
+
+      .popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .popup-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 5px;
+      }
+
+      h2 {
+        color: red;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      p {
+        color: rgb(0, 0, 111);
+        font-size: 24px;
+        text-align: center;
+        font-weight: 600;
+      }
+
+      .slice text {
+        color: aqua;
+      }
+
+      text {
+        color: #4CAF50;
+      }
+
+      h4 {
+        text-align: center;
+        font-size: 9px;
+        color: #383838;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chart"></div>
+    <div class="popup" id="popup">
+      <div class="popup-content">
+        <h2>Congratulations!</h2>
+        <p id="prize"></p>
+        <h4>*T&C Apply</h4>
+      </div>
+    </div>
+    <div id="form-container">
+      <label for="phoneInput">Enter Phone Number to spin the Wheel</label>
+      <input type="text" id="phoneInput" placeholder="Enter your registered phone number">
+      <button id="spin">Spin</button>
+    </div>
+    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.7.0/firebase-database.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles-confetti@2.10.1/tsparticles.confetti.bundle.min.js"></script>
+    <script>
+      // Initialize Firebase
+      var firebaseConfig = {
+        apiKey: "AIzaSyDnjUb40YvsE6fHFyy2KWaNqZmH3jNdfAc",
+        authDomain: "spin2db.firebaseapp.com",
+        databaseURL: "https://spin2db-default-rtdb.firebaseio.com",
+        projectId: "spin2db",
+        storageBucket: "spin2db.appspot.com",
+        messagingSenderId: "141936416790",
+        appId: "1:141936416790:web:3b7009e3c0f3d160637d37",
+        measurementId: "G-ERY0PC2NTZ"
+      };
+      firebase.initializeApp(firebaseConfig);
+      var padding = {
+          top: 10,
+          right: 3,
+          bottom: 0,
+          left: 0
+        },
+        w = 500 - padding.left - padding.right,
+        h = 500 - padding.top - padding.bottom,
+        r = Math.min(w, h) / 2,
+        rotation = 0,
+        picked = null,
+        color = d3.scale.category20();
+      var data = [{
+          "label": "All India Stay Package",
+          "value": 8,
+          "question": "Stay Package All over India",
+          "color": "#3399cc",
+          "imagePath": "stay.png"
+        }, {
+          "label": "a Bluetooth Speaker",
+          "value": 1,
+          "question": "a Bluetooth speaker",
+          "color": "#ffcc33",
+          "imagePath": "bluetooth.png"
+        }, {
+          "label": "3 Philips LED Batten",
+          "value": 1,
+          "question": "3 Philips LED batten",
+          "color": "#ff6666",
+          "imagePath": "led.png"
+        }
+        // Add more slices with different colors and values
+      ];
+      var totalValue = data.reduce(function(acc, slice) {
+        return acc + slice.value;
+      }, 0);
+      data.forEach(function(slice) {
+        slice.probability = slice.value / totalValue;
+      });
+      var svg = d3.select('#chart').append("svg").data([data]).attr("width", w + padding.left + padding.right).attr("height", h + padding.top + padding.bottom);
+      var pie = d3.layout.pie().sort(null).value(function(d) {
+        return d.value;
+      });
+      var container = svg.append("g").attr("class", "chartholder").attr("transform", "translate(" + (w / 2 + padding.left) + "," + (h / 2 + padding.top) + ")");
+      var vis = container.append("g");
+      var pie = d3.layout.pie().sort(null).value(function(d) {
+        return 1;
+      });
+      var arc = d3.svg.arc().outerRadius(r);
+      var arcs = vis.selectAll("g.slice").data(pie).enter().append("g").attr("class", "slice");
+      arcs.append("path").attr("fill", function(d, i) {
+        return data[i].color;
+      }).attr("d", function(d) {
+        return arc(d);
+      });
+      arcs.append("text").attr("transform", function(d) {
+        d.innerRadius = 0;
+        d.outerRadius = r;
+        d.angle = (d.startAngle + d.endAngle) / 2;
+        return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")translate(" + (d.outerRadius - 10) + ")";
+      }).attr("text-anchor", "end").style("font-size", "16px").style("fill", "white").style("font-weight", "900").style("display", "none").text(function(d, i) {
+        return data[i].label;
+      });
+      arcs.append("image").attr("transform", function(d) {
+        d.innerRadius = 190;
+        d.outerRadius = r;
+        d.angle = (d.startAngle + d.endAngle) / 2;
+        return "rotate(" + (d.angle * 180 / Math.PI - 140) + ")translate(" + (d.outerRadius - 260) + ")";
+      }).attr("xlink:href", function(d) {
+        return d.data.imagePath;
+      }).attr("width", 200).attr("height", 200);
+      var pointer = svg.append("g").attr("transform", "translate(" + (w + padding.left + padding.right) + "," + ((h / 2) + padding.top) + ")").append("path").attr("d", "M-" + (r * .15) + ",0L0," + (r * .05) + "L0,-" + (r * .05) + "Z");
+      // .style({ "fill": "#c0c0c0", "cursor": "pointer" });
+      container.append("circle").attr("cx", 0).attr("cy", 0).attr("r", 30).style({
+        "fill": "#c0c0c0",
+        "cursor": "pointer"
+      });
+      container.append("image").attr("xlink:href", "../logo.png") // Replace "path_to_image.png" with the actual path to your image file
+        .attr("x", -30).attr("y", -30).attr("width", 60) // Set the desired width of the image
+        .attr("height", 60); // Set the desired height of the image
+      // -------------------------------------------spin function--------------------------------
+      function spin() {
+        if (picked !== null) {
+          return;
+        }
+        var phoneNumber = document.getElementById("phoneInput").value;
+        if (!isValidMobileNumber(phoneNumber)) {
+          alert("Please enter a valid 10-digit mobile number.");
+          return;
+        }
+        var currentDateTime = new Date().toISOString();
+        var database = firebase.database();
+        var userRef = database.ref('prizes/' + phoneNumber);
+        userRef.once('value').then(function(snapshot) {
+          var previousRecord = snapshot.val();
+          if (previousRecord) {
+            var previousDateTime = new Date(previousRecord.dateTime).toISOString();
+            var previousDate = previousDateTime.substr(0, 10); // Extract date (YYYY-MM-DD)
+            var currentDate = currentDateTime.substr(0, 10); // Extract current date (YYYY-MM-DD)
+            if (previousDate === currentDate) {
+              alert("You have already spun the wheel today. Please try again tomorrow.");
+              return;
+            }
+          }
+          var randomValue = Math.random();
+          var cumulativeProbability = 0;
+          for (var i = 0; i < data.length; i++) {
+            cumulativeProbability += data[i].probability;
+            if (randomValue <= cumulativeProbability) {
+              picked = i;
+              break;
+            }
+          }
+          rotation = Math.floor(Math.random() * 360) + 720;
+          rotation += 3600;
+          vis.transition().duration(3000).attrTween("transform", rotTween).each("end", function() {
+            pointer.style("display", "none");
+            var wonPrize = data[picked].label;
+            document.getElementById("prize").textContent = "You won " + wonPrize;
+            document.getElementById("popup").style.display = "flex";
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: {
+                y: 0.6
+              },
+            });
+          });
+          var prizeData = {
+            phoneNumber: phoneNumber,
+            dateTime: currentDateTime,
+            prize: data[picked]
+          };
+          userRef.set(prizeData);
+        }).catch(function(error) {
+          // Handle the case when the previous record is not found
+          var randomValue = Math.random();
+          var cumulativeProbability = 0;
+          for (var i = 0; i < data.length; i++) {
+            cumulativeProbability += data[i].probability;
+            if (randomValue <= cumulativeProbability) {
+              picked = i;
+              break;
+            }
+          }
+          rotation = Math.floor(Math.random() * 360) + 720;
+          rotation += 3600;
+          vis.transition().duration(3000).attrTween("transform", rotTween).each("end", function() {
+            pointer.style("display", "none");
+            var wonPrize = data[picked].label;
+            document.getElementById("prize").textContent = "You won " + wonPrize;
+            document.getElementById("popup").style.display = "flex";
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: {
+                y: 0.6
+              },
+            });
+          });
+          var prizeData = {
+            phoneNumber: phoneNumber,
+            dateTime: currentDateTime,
+            prize: data[picked]
+          };
+          userRef.set(prizeData);
+        });
+      }
+      // ----------------------------------end of spin function-------------------------------
+      function rotTween(to) {
+        var i = d3.interpolate(0, rotation);
+        return function(t) {
+          return "rotate(" + i(t) + ")";
+        };
+      }
+
+      function isValidMobileNumber(phoneNumber) {
+        var pattern = /^[0-9]{10}$/;
+        return pattern.test(phoneNumber);
+      }
+      // Event listener for the spin button
+      document.getElementById("spin").addEventListener("click", spin);
+    </script>
+  </body>
+</html>
